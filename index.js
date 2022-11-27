@@ -25,3 +25,27 @@ const uri = `mongodb+srv://${process.env.DB_USER}:${process.env.DB_PASSWORD}@clu
 console.log(uri);
 const client = new MongoClient(uri, { useNewUrlParser: true, useUnifiedTopology: true, serverApi: ServerApiVersion.v1 });
 
+async function run() {
+  try {
+    const usersCollection = client.db('ResaleDB').collection('users')
+    const categoryNameCollection = client.db('ResaleDB').collection('categoryName')
+
+
+
+    app.post('/users', async (req, res) => {
+      const user = req.body
+      const result = await usersCollection.insertOne(user)
+      res.send(result)
+    })
+    app.get('/categoryName', async (req, res) => {
+      const query = {}
+      const result = await categoryNameCollection.find(query).toArray()
+      res.send(result)
+    })
+
+  }
+  finally {
+    
+  }
+}
+run().catch(console.dir)
