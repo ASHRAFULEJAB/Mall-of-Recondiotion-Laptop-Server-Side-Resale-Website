@@ -1,4 +1,4 @@
-const { MongoClient, ServerApiVersion } = require('mongodb');
+const { MongoClient, ServerApiVersion } = require('mongodb')
 const express = require('express')
 const cors = require('cors')
 require('dotenv').config()
@@ -17,20 +17,23 @@ app.listen(port, () => {
   console.log(`Recondition laptops is running on ${port}`)
 })
 
-
 //db
 
-
-const uri = `mongodb+srv://${process.env.DB_USER}:${process.env.DB_PASSWORD}@cluster0.dnw37y6.mongodb.net/?retryWrites=true&w=majority`;
-console.log(uri);
-const client = new MongoClient(uri, { useNewUrlParser: true, useUnifiedTopology: true, serverApi: ServerApiVersion.v1 });
+const uri = `mongodb+srv://${process.env.DB_USER}:${process.env.DB_PASSWORD}@cluster0.dnw37y6.mongodb.net/?retryWrites=true&w=majority`
+console.log(uri)
+const client = new MongoClient(uri, {
+  useNewUrlParser: true,
+  useUnifiedTopology: true,
+  serverApi: ServerApiVersion.v1,
+})
 
 async function run() {
   try {
     const usersCollection = client.db('ResaleDB').collection('users')
-    const categoryNameCollection = client.db('ResaleDB').collection('categoryName')
-
-
+    const categoryNameCollection = client
+      .db('ResaleDB')
+      .collection('categoryName')
+    const categoriesCollection = client.db('ResaleDB').collection('categories')
 
     app.post('/users', async (req, res) => {
       const user = req.body
@@ -42,10 +45,25 @@ async function run() {
       const result = await categoryNameCollection.find(query).toArray()
       res.send(result)
     })
+    app.get('/categories/:id', async (req, res) => {
+      const id = req.params.id
+      const filter = {category_id:id}
+      // if (id === '06') {
+      //   res.send(categoriesCollection)
+      // } else {
+      //   const selectedCategory = categoriesCollection.filter((nn) => nn.category_id === id)
+      //   res.send(selectedCategory)
+      // }
 
-  }
-  finally {
-    
+      // const id = req.params.category_id
+      // console.log(id);
+      // const query = { id }
+      // console.log(query)
+      const result = await categoriesCollection.find(filter).toArray()
+      console.log(result)
+      res.send(result)
+    })
+  } finally {
   }
 }
 run().catch(console.dir)
