@@ -34,6 +34,7 @@ async function run() {
       .db('ResaleDB')
       .collection('categoryName')
     const categoriesCollection = client.db('ResaleDB').collection('categories')
+    const ordersCollection = client.db('ResaleDB').collection('orders')
 
     app.post('/users', async (req, res) => {
       const user = req.body
@@ -61,6 +62,16 @@ async function run() {
       // console.log(query)
       const result = await categoriesCollection.find(filter).toArray()
       console.log(result)
+      res.send(result)
+    })
+    app.get('/categories', async (req, res) => {
+      const query = {}
+      const result = await categoriesCollection.find(query).toArray()
+      res.send(result)
+    })
+    app.post('/orders', async (req, res) => {
+      const orders = req.body;
+      const result = await ordersCollection.insertOne(orders)
       res.send(result)
     })
   } finally {
