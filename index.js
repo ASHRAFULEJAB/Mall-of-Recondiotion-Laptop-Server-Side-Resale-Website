@@ -1,4 +1,4 @@
-const { MongoClient, ServerApiVersion } = require('mongodb')
+const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb')
 const express = require('express')
 const cors = require('cors')
 require('dotenv').config()
@@ -50,6 +50,19 @@ async function run() {
       const product = req.body;
       const result = await categoriesCollection.insertOne(product)
       console.log(result)
+      res.send(result)
+    })
+    app.get('/categories',  async (req, res) => {
+      const email = req.query.email
+      const query = { email: email }
+      const result = await categoriesCollection.find(query).toArray()
+      res.send(result)
+    })
+    app.delete('/categories/:id',  async (req, res) => {
+      const id = req.params.id
+      const filter = { _id: ObjectId(id) }
+      console.log(filter);
+      const result = await categoriesCollection.deleteOne(filter)
       res.send(result)
     })
     app.get('/categories/:id', async (req, res) => {
