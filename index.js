@@ -35,10 +35,21 @@ async function run() {
       .collection('categoryName')
     const categoriesCollection = client.db('ResaleDB').collection('categories')
     const ordersCollection = client.db('ResaleDB').collection('orders')
+    const advertiseCollection = client.db('ResaleDB').collection('advertise')
 
     app.post('/users', async (req, res) => {
       const user = req.body
       const result = await usersCollection.insertOne(user)
+      res.send(result)
+    })
+    app.post('/advertise', async (req, res) => {
+      const advertise = req.body
+      const result = await advertiseCollection.insertOne(advertise)
+      res.send(result)
+    })
+    app.get('/advertise',async (req, res) => {
+      const query = {}
+      const result = await advertiseCollection.find(query).toArray()
       res.send(result)
     })
     app.get('/categoryName', async (req, res) => {
