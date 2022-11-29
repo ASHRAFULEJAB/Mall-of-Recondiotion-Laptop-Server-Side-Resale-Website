@@ -42,6 +42,11 @@ async function run() {
       const result = await usersCollection.insertOne(user)
       res.send(result)
     })
+    app.get('/users', async (req, res) => {
+      const query = {}
+      const result = await usersCollection.find(query).toArray()
+      res.send(result)
+    })
     app.post('/advertise', async (req, res) => {
       const advertise = req.body
       const result = await advertiseCollection.insertOne(advertise)
@@ -125,6 +130,12 @@ async function run() {
       const user = await usersCollection.findOne(query)
       // console.log(user)
       res.send({ isSeller: user?.role === 'Seller' })
+    })
+    app.delete('/users/:id', async (req, res) => {
+      const id = req.params.id
+      const filter = { _id: ObjectId(id) }
+      const result = await usersCollection.deleteOne(filter)
+      res.send(result)
     })
   } finally {
   }
