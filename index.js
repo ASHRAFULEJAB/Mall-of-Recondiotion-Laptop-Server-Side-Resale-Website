@@ -3,7 +3,7 @@ const express = require('express')
 const cors = require('cors')
 require('dotenv').config()
 // const jwt = require('jsonwebtoken')
-// const stripe = require('stripe')(process.env.STRIPE_KEY)
+const stripe = require('stripe')(process.env.STRIPE_KEYY)
 
 const app = express()
 app.use(cors())
@@ -36,6 +36,7 @@ async function run() {
     const categoriesCollection = client.db('ResaleDB').collection('categories')
     const ordersCollection = client.db('ResaleDB').collection('orders')
     const advertiseCollection = client.db('ResaleDB').collection('advertise')
+    const paymentCollection = client.db('ResaleDB').collection('payment')
 
     app.post('/users', async (req, res) => {
       const user = req.body
@@ -52,7 +53,7 @@ async function run() {
       const result = await advertiseCollection.insertOne(advertise)
       res.send(result)
     })
-    app.get('/advertise',async (req, res) => {
+    app.get('/advertise', async (req, res) => {
       const query = {}
       const result = await advertiseCollection.find(query).toArray()
       res.send(result)
@@ -62,28 +63,28 @@ async function run() {
       const result = await categoryNameCollection.find(query).toArray()
       res.send(result)
     })
-    app.post('/categories/:id',  async (req, res) => {
-      const product = req.body;
+    app.post('/categories/:id', async (req, res) => {
+      const product = req.body
       const result = await categoriesCollection.insertOne(product)
       console.log(result)
       res.send(result)
     })
-    app.get('/categories',  async (req, res) => {
+    app.get('/categories', async (req, res) => {
       const email = req.query.email
       const query = { email: email }
       const result = await categoriesCollection.find(query).toArray()
       res.send(result)
     })
-    app.delete('/categories/:id',  async (req, res) => {
+    app.delete('/categories/:id', async (req, res) => {
       const id = req.params.id
       const filter = { _id: ObjectId(id) }
-      console.log(filter);
+      console.log(filter)
       const result = await categoriesCollection.deleteOne(filter)
       res.send(result)
     })
     app.get('/categories/:id', async (req, res) => {
       const id = req.params.id
-      const filter = {category_id:id}
+      const filter = { category_id: id }
       // if (id === '06') {
       //   res.send(categoriesCollection)
       // } else {
@@ -105,13 +106,13 @@ async function run() {
       res.send(result)
     })
     app.post('/orders', async (req, res) => {
-      const orders = req.body;
+      const orders = req.body
       const result = await ordersCollection.insertOne(orders)
       res.send(result)
     })
     app.get('/orders', async (req, res) => {
-      const email = req.query.email;
-      const query={ email: email }
+      const email = req.query.email
+      const query = { email: email }
       const result = await ordersCollection.find(query).toArray()
       res.send(result)
     })
@@ -135,6 +136,46 @@ async function run() {
       const id = req.params.id
       const filter = { _id: ObjectId(id) }
       const result = await usersCollection.deleteOne(filter)
+      res.send(result)
+    })
+    //payment
+    app.get('/orders/:id', async (req, res) => {
+      const id = req.params.id
+      const query = { _id: ObjectId(id) }
+      const result = await ordersCollection.findOne(query)
+      res.send(result)
+    })
+
+    app.post('/create-payment-intent', async (req, res) => {
+      const order = req.body;
+      const price = parseInt(order.price);
+      console.log(price)
+      const amount = price * 100
+      const paymentIntent = await stripe.paymentIntents.create({
+        currency: 'usd',
+        amount: amount,
+        "payment_method_types": ['card'],
+      })
+      
+      res.send({
+        clientSecret: paymentIntent.client_secret,
+      })
+    })
+    app.post('/payments', async (req, res) => {
+      const payment = req.body
+      const result = await paymentCollection.insertOne(payment)
+      const id = payment.orderId
+      const filter = { _id: ObjectId(id) }
+      const updadtedDoc = {
+        $set: {
+          paid: true,
+          transactionId: payment.transactionId,
+        },
+      }
+      const updatedResult = await ordersCollection.updateOne(
+        filter,
+        updadtedDoc
+      )
       res.send(result)
     })
   } finally {
