@@ -2,7 +2,7 @@ const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb')
 const express = require('express')
 const cors = require('cors')
 require('dotenv').config()
-// const jwt = require('jsonwebtoken')
+const jwt = require('jsonwebtoken')
 const stripe = require('stripe')(process.env.STRIPE_KEYY)
 
 const app = express()
@@ -20,12 +20,30 @@ app.listen(port, () => {
 //db
 
 const uri = `mongodb+srv://${process.env.DB_USER}:${process.env.DB_PASSWORD}@cluster0.dnw37y6.mongodb.net/?retryWrites=true&w=majority`
-console.log(uri)
+
 const client = new MongoClient(uri, {
   useNewUrlParser: true,
   useUnifiedTopology: true,
   serverApi: ServerApiVersion.v1,
 })
+
+//jwt
+
+// function verifyJWT(req, res, next) {
+//   const authHeader = req.headers.authorization
+//   console.log(req.headers.authorization)
+//   if (!authHeader) {
+//     return res.status(401).send('Unauhtorized Access')
+//   }
+//   const token = authHeader.split(' ')[1]
+//   jwt.verify(token, process.env.ACCESS_TOKEN, function (err, decoded) {
+//     if (err) {
+//       return req.status(403).send('Forbidden access')
+//     }
+//     req.decoded = decoded
+//     next()
+//   })
+// }
 
 async function run() {
   try {
@@ -39,7 +57,7 @@ async function run() {
     const paymentCollection = client.db('ResaleDB').collection('payment')
     const reportedCollection = client.db('ResaleDB').collection('reported')
 
-    app.post('/users', async (req, res) => {
+    app.post('/users',  async (req, res) => {
       const user = req.body
       const result = await usersCollection.insertOne(user)
       res.send(result)
@@ -60,6 +78,10 @@ async function run() {
       )
       res.send(result)
     })
+
+ 
+
+    //users section
     app.get('/users', async (req, res) => {
       const query = {}
       const result = await usersCollection.find(query).toArray()
@@ -70,8 +92,36 @@ async function run() {
       const query = { email }
       const user = await usersCollection.findOne(query)
       // console.log(user)
-      res.send({ isVerfy: user?.verfiy === "Veryfied" })
+      res.send({ isVerfy: user?.verfiy === 'Veryfied' })
     })
+      //jwt token
+      function verifyJWT(req, res, next) {
+        const authHeader = req.headers.authorization
+        if (!authHeader) {
+          return res.status(401).send('Unauthorized Access')
+        }
+        const token = authHeader.split(' ')[1]
+        jwt.verify(token, process.env.ACCESS_TOKEN , function (err, decoded) {
+          if (err) {
+            return res.status(403).send('Forbidden Access')
+          }
+          req.decoded = decoded
+          next()
+        })
+      }
+  
+       //jwt token
+ 
+       app.post('/jwtToken', (req, res) => {
+        const user = req.body
+        console.log(user)
+        const token = jwt.sign(user, process.env.ACCESS_TOKEN , {
+          expiresIn: '10d',
+        })
+        res.send({ token })
+      })
+
+    //report admin
     app.post('/reportAdmin', async (req, res) => {
       const reported = req.body
       const result = await reportedCollection.insertOne(reported)
@@ -84,14 +134,16 @@ async function run() {
     })
     app.delete('/reportAdmin/:id', async (req, res) => {
       const id = req.params.id
-      console.log(id)
+      // console.log(id)
       const filter = { _id: id }
-      console.log(filter)
+      // console.log(filter)
       const result = await reportedCollection.deleteOne(filter)
-      console.log(result)
+      // console.log(result)
       res.send(result)
     })
-    app.post('/advertise', async (req, res) => {
+
+    //admin section
+    app.post('/advertise', verifyJWT, async (req, res) => {
       const advertise = req.body
       const result = await advertiseCollection.insertOne(advertise)
       res.send(result)
@@ -101,6 +153,8 @@ async function run() {
       const result = await advertiseCollection.find(query).toArray()
       res.send(result)
     })
+
+    //category section
     app.get('/categoryName', async (req, res) => {
       const query = {}
       const result = await categoryNameCollection.find(query).toArray()
@@ -148,12 +202,14 @@ async function run() {
       const result = await categoriesCollection.find(query).toArray()
       res.send(result)
     })
+
+    //orders section
     app.post('/orders', async (req, res) => {
       const orders = req.body
       const result = await ordersCollection.insertOne(orders)
       res.send(result)
     })
-    app.get('/orders', async (req, res) => {
+    app.get('/orders', verifyJWT, async (req, res) => {
       const email = req.query.email
       const query = { email: email }
       const result = await ordersCollection.find(query).toArray()
@@ -181,6 +237,7 @@ async function run() {
       const result = await usersCollection.deleteOne(filter)
       res.send(result)
     })
+
     //payment
     app.get('/orders/:id', async (req, res) => {
       const id = req.params.id
