@@ -44,10 +44,33 @@ async function run() {
       const result = await usersCollection.insertOne(user)
       res.send(result)
     })
+    app.put('/users/admin/:id', async (req, res) => {
+      const id = req.params.id
+      const filter = { _id: ObjectId(id) }
+      const options = { upsert: true }
+      const updatedDoc = {
+        $set: {
+          verfiy: 'Veryfied',
+        },
+      }
+      const result = await usersCollection.updateOne(
+        filter,
+        updatedDoc,
+        options
+      )
+      res.send(result)
+    })
     app.get('/users', async (req, res) => {
       const query = {}
       const result = await usersCollection.find(query).toArray()
       res.send(result)
+    })
+    app.get('/users/:email', async (req, res) => {
+      const email = req.params.email
+      const query = { email }
+      const user = await usersCollection.findOne(query)
+      // console.log(user)
+      res.send({ isVerfy: user?.verfiy === "Veryfied" })
     })
     app.post('/reportAdmin', async (req, res) => {
       const reported = req.body
@@ -61,8 +84,8 @@ async function run() {
     })
     app.delete('/reportAdmin/:id', async (req, res) => {
       const id = req.params.id
-      console.log(id);
-      const filter = {_id:id }
+      console.log(id)
+      const filter = { _id: id }
       console.log(filter)
       const result = await reportedCollection.deleteOne(filter)
       console.log(result)
@@ -167,16 +190,16 @@ async function run() {
     })
 
     app.post('/create-payment-intent', async (req, res) => {
-      const order = req.body;
-      const price = parseInt(order.price);
+      const order = req.body
+      const price = parseInt(order.price)
       console.log(price)
       const amount = price * 100
       const paymentIntent = await stripe.paymentIntents.create({
         currency: 'usd',
         amount: amount,
-        "payment_method_types": ['card'],
+        payment_method_types: ['card'],
       })
-      
+
       res.send({
         clientSecret: paymentIntent.client_secret,
       })
