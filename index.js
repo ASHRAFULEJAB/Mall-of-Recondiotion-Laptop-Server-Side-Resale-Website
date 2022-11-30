@@ -37,6 +37,7 @@ async function run() {
     const ordersCollection = client.db('ResaleDB').collection('orders')
     const advertiseCollection = client.db('ResaleDB').collection('advertise')
     const paymentCollection = client.db('ResaleDB').collection('payment')
+    const reportedCollection = client.db('ResaleDB').collection('reported')
 
     app.post('/users', async (req, res) => {
       const user = req.body
@@ -46,6 +47,25 @@ async function run() {
     app.get('/users', async (req, res) => {
       const query = {}
       const result = await usersCollection.find(query).toArray()
+      res.send(result)
+    })
+    app.post('/reportAdmin', async (req, res) => {
+      const reported = req.body
+      const result = await reportedCollection.insertOne(reported)
+      res.send(result)
+    })
+    app.get('/reportAdmin', async (req, res) => {
+      const query = {}
+      const result = await reportedCollection.find(query).toArray()
+      res.send(result)
+    })
+    app.delete('/reportAdmin/:id', async (req, res) => {
+      const id = req.params.id
+      console.log(id);
+      const filter = {_id:id }
+      console.log(filter)
+      const result = await reportedCollection.deleteOne(filter)
+      console.log(result)
       res.send(result)
     })
     app.post('/advertise', async (req, res) => {
