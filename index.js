@@ -57,7 +57,7 @@ async function run() {
     const paymentCollection = client.db('ResaleDB').collection('payment')
     const reportedCollection = client.db('ResaleDB').collection('reported')
 
-    app.post('/users',  async (req, res) => {
+    app.post('/users', async (req, res) => {
       const user = req.body
       const result = await usersCollection.insertOne(user)
       res.send(result)
@@ -79,8 +79,6 @@ async function run() {
       res.send(result)
     })
 
- 
-
     //users section
     app.get('/users', async (req, res) => {
       const query = {}
@@ -94,32 +92,32 @@ async function run() {
       // console.log(user)
       res.send({ isVerfy: user?.verfiy === 'Veryfied' })
     })
-      //jwt token
-      function verifyJWT(req, res, next) {
-        const authHeader = req.headers.authorization
-        if (!authHeader) {
-          return res.status(401).send('Unauthorized Access')
-        }
-        const token = authHeader.split(' ')[1]
-        jwt.verify(token, process.env.ACCESS_TOKEN , function (err, decoded) {
-          if (err) {
-            return res.status(403).send('Forbidden Access')
-          }
-          req.decoded = decoded
-          next()
-        })
+    //jwt token
+    function verifyJWT(req, res, next) {
+      const authHeader = req.headers.authorization
+      if (!authHeader) {
+        return res.status(401).send('Unauthorized Access')
       }
-  
-       //jwt token
- 
-       app.post('/jwtToken', (req, res) => {
-        const user = req.body
-        console.log(user)
-        const token = jwt.sign(user, process.env.ACCESS_TOKEN , {
-          expiresIn: '10d',
-        })
-        res.send({ token })
+      const token = authHeader.split(' ')[1]
+      jwt.verify(token, process.env.ACCESS_TOKEN, function (err, decoded) {
+        if (err) {
+          return res.status(403).send('Forbidden Access')
+        }
+        req.decoded = decoded
+        next()
       })
+    }
+
+    //jwt token
+
+    app.post('/jwtToken', (req, res) => {
+      const user = req.body
+      console.log(user)
+      const token = jwt.sign(user, process.env.ACCESS_TOKEN, {
+        expiresIn: '10d',
+      })
+      res.send({ token })
+    })
 
     //report admin
     app.post('/reportAdmin', async (req, res) => {
@@ -142,15 +140,28 @@ async function run() {
       res.send(result)
     })
 
-    //admin section
-    app.post('/advertise', verifyJWT, async (req, res) => {
-      const advertise = req.body
-      const result = await advertiseCollection.insertOne(advertise)
+    //seller section
+    app.put('/advertise', verifyJWT, async (req, res) => {
+      const id = req.query.id
+      console.log(id)
+      const filter = { _id: ObjectId(id) }
+      const updatedDoc = {
+        $set: {
+          type: 'publish',
+        },
+      }
+      const result = await categoriesCollection.updateOne(filter, updatedDoc)
+      console.log(result)
       res.send(result)
     })
     app.get('/advertise', async (req, res) => {
-      const query = {}
-      const result = await advertiseCollection.find(query).toArray()
+      const product_type = req.query.product_type
+      const type = req.query.type
+      console.log(type)
+      const query = { product_type: product_type, type: type }
+
+      const result = await categoriesCollection.find(query).toArray()
+      console.log(result)
       res.send(result)
     })
 
@@ -202,6 +213,12 @@ async function run() {
       const result = await categoriesCollection.find(query).toArray()
       res.send(result)
     })
+    app.get('/categories/email', async (req, res) => {
+      const email = req.query.email
+      console.log(email)
+      const result = await categoriesCollection.find(query).toArray()
+      res.send(result)
+    })
 
     //orders section
     app.post('/orders', async (req, res) => {
@@ -212,6 +229,11 @@ async function run() {
     app.get('/orders', verifyJWT, async (req, res) => {
       const email = req.query.email
       const query = { email: email }
+      const result = await ordersCollection.find(query).toArray()
+      res.send(result)
+    })
+    app.get('/orderss', async (req, res) => {
+      const query = {}
       const result = await ordersCollection.find(query).toArray()
       res.send(result)
     })
@@ -261,22 +283,44 @@ async function run() {
         clientSecret: paymentIntent.client_secret,
       })
     })
-    app.post('/payments', async (req, res) => {
+    app.put('/payments', async (req, res) => {
       const payment = req.body
+      const productName = req.query.productName
+      console.log(productName)
       const result = await paymentCollection.insertOne(payment)
       const id = payment.orderId
+      const filter = { name: productName }
+
+      const updadtedDoc = {
+        $set: {
+          product_type: 'unavailable',
+          transactionId: payment.transactionId,
+        },
+      }
+      const updatedResult = await categoriesCollection.updateOne(
+        filter,
+        updadtedDoc
+      )
+
+      // const resultProduct = await categoriesCollection.updateOne()
+
+      res.send(result)
+    })
+    ///paid status
+    app.put('/payments/update', async (req, res) => {
+      const id = req.query.id
       const filter = { _id: ObjectId(id) }
       const updadtedDoc = {
         $set: {
-          paid: true,
-          transactionId: payment.transactionId,
+          paid: 'true',
         },
       }
       const updatedResult = await ordersCollection.updateOne(
         filter,
         updadtedDoc
       )
-      res.send(result)
+
+      res.send(updatedResult)
     })
   } finally {
   }
