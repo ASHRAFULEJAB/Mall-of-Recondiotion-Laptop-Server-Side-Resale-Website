@@ -62,20 +62,25 @@ async function run() {
       const result = await usersCollection.insertOne(user)
       res.send(result)
     })
-    app.put('/users/admin/:id', async (req, res) => {
-      const id = req.params.id
-      const filter = { _id: ObjectId(id) }
-      const options = { upsert: true }
+    app.put('/users/admin', async (req, res) => {
+      // const id = req.params.id
+      const email = req.query.email
+      console.log(email)
+      const filter = { email: email }
+      console.log(filter);
       const updatedDoc = {
         $set: {
           verfiy: 'Veryfied',
         },
       }
-      const result = await usersCollection.updateOne(
+      console.log(updatedDoc)
+      const result = await categoriesCollection.updateOne(
         filter,
         updatedDoc,
-        options
+        
       )
+      console.log(result)
+      const updatedResult = await usersCollection.updateOne(filter,updatedDoc)
       res.send(result)
     })
 
@@ -85,12 +90,14 @@ async function run() {
       const result = await usersCollection.find(query).toArray()
       res.send(result)
     })
-    app.get('/users/:email', async (req, res) => {
-      const email = req.params.email
-      const query = { email }
-      const user = await usersCollection.findOne(query)
-      // console.log(user)
-      res.send({ isVerfy: user?.verfiy === 'Veryfied' })
+    app.get('/users/email', async (req, res) => {
+      const email = req.query.email
+      console.log(email);
+      const query = { email: email }
+      console.log(query)
+      const result = await usersCollection.findOne(query)
+     console.log(result);
+      res.send(result)
     })
     //jwt token
     function verifyJWT(req, res, next) {
@@ -181,6 +188,7 @@ async function run() {
       const email = req.query.email
       const query = { email: email }
       const result = await categoriesCollection.find(query).toArray()
+      console.log(result);
       res.send(result)
     })
     app.delete('/categories/:id', async (req, res) => {
