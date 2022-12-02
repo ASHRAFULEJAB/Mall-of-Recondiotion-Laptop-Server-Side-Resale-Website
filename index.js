@@ -29,21 +29,7 @@ const client = new MongoClient(uri, {
 
 //jwt
 
-// function verifyJWT(req, res, next) {
-//   const authHeader = req.headers.authorization
-//   console.log(req.headers.authorization)
-//   if (!authHeader) {
-//     return res.status(401).send('Unauhtorized Access')
-//   }
-//   const token = authHeader.split(' ')[1]
-//   jwt.verify(token, process.env.ACCESS_TOKEN, function (err, decoded) {
-//     if (err) {
-//       return req.status(403).send('Forbidden access')
-//     }
-//     req.decoded = decoded
-//     next()
-//   })
-// }
+
 
 async function run() {
   try {
@@ -63,7 +49,7 @@ async function run() {
       res.send(result)
     })
     app.put('/users/admin', async (req, res) => {
-      // const id = req.params.id
+
       const email = req.query.email
       console.log(email)
       const filter = { email: email }
@@ -74,13 +60,13 @@ async function run() {
         },
       }
       console.log(updatedDoc)
-      const result = await categoriesCollection.updateOne(
+      const result = await usersCollection.updateOne(filter,updatedDoc)
+      const  updatedResult= await categoriesCollection.updateOne(
         filter,
         updatedDoc,
         
       )
       console.log(result)
-      const updatedResult = await usersCollection.updateOne(filter,updatedDoc)
       res.send(result)
     })
 
@@ -139,11 +125,11 @@ async function run() {
     })
     app.delete('/reportAdmin/:id', async (req, res) => {
       const id = req.params.id
-      // console.log(id)
+    
       const filter = { _id: id }
-      // console.log(filter)
+
       const result = await reportedCollection.deleteOne(filter)
-      // console.log(result)
+    
       res.send(result)
     })
 
@@ -201,17 +187,7 @@ async function run() {
     app.get('/categories/:id', async (req, res) => {
       const id = req.params.id
       const filter = { category_id: id }
-      // if (id === '06') {
-      //   res.send(categoriesCollection)
-      // } else {
-      //   const selectedCategory = categoriesCollection.filter((nn) => nn.category_id === id)
-      //   res.send(selectedCategory)
-      // }
-
-      // const id = req.params.category_id
-      // console.log(id);
-      // const query = { id }
-      // console.log(query)
+     
       const result = await categoriesCollection.find(filter).toArray()
       console.log(result)
       res.send(result)
@@ -251,14 +227,14 @@ async function run() {
       const email = req.params.email
       const query = { email }
       const user = await usersCollection.findOne(query)
-      // console.log(user)
+     
       res.send({ isAdmin: user?.role === 'admin' })
     })
     app.get('/users/seller/:email', async (req, res) => {
       const email = req.params.email
       const query = { email }
       const user = await usersCollection.findOne(query)
-      // console.log(user)
+   
       res.send({ isSeller: user?.role === 'Seller' })
     })
     app.delete('/users/:id', async (req, res) => {
@@ -310,7 +286,7 @@ async function run() {
         updadtedDoc
       )
 
-      // const resultProduct = await categoriesCollection.updateOne()
+      
 
       res.send(result)
     })
